@@ -1,5 +1,6 @@
 from enum import Enum
 import math
+import random
 
 
 def sigmoid(x):
@@ -60,7 +61,7 @@ class Node(object):
         for node in self.out_connected_nodes:
             temp_sum += node.get_delta(weights) * weights[(self, node)]
 
-        self.delta = temp_sum
+        self.delta = temp_sum * self.out * (1 - self.out)
         return self.delta
 
 
@@ -95,7 +96,7 @@ class Layer(object):
 
 
 class Perceptron(object):
-    def __init__(self, input_layer_node_number, hidden_layer_node_number, hidden_layer_number, output_layer_node_number, initial_weight):
+    def __init__(self, input_layer_node_number, hidden_layer_node_number, hidden_layer_number, output_layer_node_number):
         self.layers = []
         self.layers.append(Layer(input_layer_node_number))
         for _ in range(hidden_layer_number):
@@ -108,15 +109,15 @@ class Perceptron(object):
 
         self.weights = {}
         for i in range(len(self.layers) - 1):
-            self.connect_two_layers(self.layers[i], self.layers[i + 1], initial_weight)
+            self.connect_two_layers(self.layers[i], self.layers[i + 1])
 
-    def connect_two_layers(self, layer_a, layer_b, initial_weight):
+    def connect_two_layers(self, layer_a, layer_b):
         for node_a in layer_a.nodes:
             for node_b in layer_b.nodes:
                 if node_b.nodeType is not NodeType.Bias:
                     node_b.net_connected_nodes.append(node_a)
                     node_a.out_connected_nodes.append(node_b)
-                    self.weights.update({(node_a, node_b): initial_weight})
+                    self.weights.update({(node_a, node_b): random.random() - 0.5})
 
     def reset_nodes(self):
         for layer in self.layers:
@@ -133,25 +134,27 @@ class Perceptron(object):
 
         return result
 
-    def update_weights(self, input_data, expect_output, learning_constant):
+    def update_weights(self, input_data, expect_output, learning_rate):
         self.input_layer.set_nets(input_data)
         self.output_layer.get_outs(self.weights)
         self.output_layer.set_expect_outs(expect_output)
         self.input_layer.get_deltas(self.weights)
 
         for (node_a, node_b) in self.weights:
-            self.weights[(node_a, node_b)] -= node_a.out * node_b.delta * learning_constant
+            self.weights[(node_a, node_b)] -= node_a.out * node_b.delta * learning_rate
 
         self.reset_nodes()
 
 
-a = Perceptron(2, 3, 3, 1, 0)
+a = Perceptron(2, 2, 1, 1)
+num = 1000000
 
-for _ in range(100):
-    a.update_weights([0, 0], [0], 0.5)
+for k in range(num):
+    a.update_weights([0, 0], [0], 1)
+    a.update_weights([0, 1], [1], 1)
+    a.update_weights([1, 0], [1], 1)
+    a.update_weights([1, 1], [0], 1)
 
-for _ in range(100):
-    a.update_weights([1, 1], [1], 0.5)
 
 print(a.get_result([0, 0]))
 print(a.get_result([0, 1]))
