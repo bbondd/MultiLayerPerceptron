@@ -65,8 +65,9 @@ class NodeType(Enum):
 
 
 class Node(object):
-    def __init__(self, node_type, activation_function):
+    def __init__(self, node_type, dropout_percentage, activation_function):
         self.nodeType = node_type
+        self.dropoutPercentage = dropout_percentage
         self.activationFunction = activation_function
 
         if node_type is NodeType.Bias:
@@ -107,22 +108,26 @@ class Node(object):
 
         if not self.outConnectedNodes:    # if self is output node
             self.delta = (self.out - self.expect_out) * self.activationFunction(self.out, True)
-            return self.delta
 
-        temp_sum = 0
-        for node in self.outConnectedNodes:
-            temp_sum += node.get_delta(weights) * weights[(self, node)]
+        else:
+            temp_sum = 0
+            for node in self.outConnectedNodes:
+                temp_sum += node.get_delta(weights) * weights[(self, node)]
 
-        self.delta = temp_sum * self.activationFunction(self.out, True)
+            self.delta = temp_sum * self.activationFunction(self.out, True)
+
+        if random.random() < self.dropoutPercentage:
+            self.delta = 0
+
         return self.delta
 
 
 class Layer(object):
-    def __init__(self, node_number, activation_function):
+    def __init__(self, node_number, dropout_percentage, activation_function):
         self.nodes = []
         for _ in range(node_number):
-            self.nodes.append(Node(NodeType.Normal, activation_function))
-        self.nodes.append(Node(NodeType.Bias, activation_function))
+            self.nodes.append(Node(NodeType.Normal, dropout_percentage, activation_function))
+        self.nodes.append(Node(NodeType.Bias, dropout_percentage, activation_function))
 
     def set_nets(self, nets):
         for i in range(len(nets)):
@@ -148,16 +153,16 @@ class Layer(object):
 
 
 class Perceptron(object):
-    def __init__(self, layer_node_numbers, hidden_layer_number, activation_function):
+    def __init__(self, layer_node_numbers, hidden_layer_number, dropout_percentage, activation_function):
         input_layer_node_number = layer_node_numbers[0]
         hidden_layer_node_number = layer_node_numbers[1]
         output_layer_node_number = layer_node_numbers[2]
 
         self.layers = []
-        self.layers.append(Layer(input_layer_node_number, activation_function))
+        self.layers.append(Layer(input_layer_node_number, dropout_percentage, activation_function))
         for _ in range(hidden_layer_number):
-            self.layers.append(Layer(hidden_layer_node_number, activation_function))
-        self.layers.append(Layer(output_layer_node_number, activation_function))
+            self.layers.append(Layer(hidden_layer_node_number, dropout_percentage, activation_function))
+        self.layers.append(Layer(output_layer_node_number, dropout_percentage, activation_function))
 
         self.input_layer = self.layers[0]
         self.output_layer = self.layers[-1]
@@ -207,7 +212,7 @@ class Perceptron(object):
 
 
 def main():
-    perceptron = Perceptron([2, 3, 1], 2, leaky_rectified_linear_unit)
+    perceptron = Perceptron([2, 3, 1], 2, 0.4, leaky_rectified_linear_unit)
 
     input_data_set = [
         [0, 0],
@@ -223,7 +228,7 @@ def main():
         [0]
     ]
 
-    for _ in range(100000):
+    for _ in range(100000 * 2):
         perceptron.train(input_data_set, expect_output_set, 0.3)
 
     trained_perceptron = open('./trained_perceptron.pickle', 'wb')
@@ -236,12 +241,7 @@ def main():
     print(old.get_result([1, 0]))
     print(old.get_result([1, 1]))
 
-
-old = pickle.load(open('./trained_perceptron.pickle', 'rb'))
-print(old.get_result([0, 0]))
-print(old.get_result([0, 1]))
-print(old.get_result([1, 0]))
-print(old.get_result([1, 1]))
+main()
 
 """
 f = open("./asdf.pickle", 'wb')
