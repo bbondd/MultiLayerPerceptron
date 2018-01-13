@@ -1,6 +1,7 @@
 from enum import Enum
 import math
 import random
+import pickle
 
 
 def sigmoid(x, derivative=False):
@@ -203,38 +204,51 @@ class Perceptron(object):
     def train(self, input_data_set, expect_output_set, learning_rate):
         for i in range(len(input_data_set)):
             self.update_weights(input_data_set[i], expect_output_set[i], learning_rate)
-    
+
 
 def main():
-    a = Perceptron([2, 3, 1], 2, leaky_rectified_linear_unit)
+    perceptron = Perceptron([2, 3, 1], 2, leaky_rectified_linear_unit)
 
-    def half_circle(x, y):
-        return math.sqrt(x ** 2 + y ** 2)
+    input_data_set = [
+        [0, 0],
+        [0, 1],
+        [1, 0],
+        [1, 1]
+    ]
 
-    input_data_set = []
-    expect_output_set = []
+    expect_output_set = [
+        [0],
+        [1],
+        [1],
+        [0]
+    ]
 
-    for _ in range(100):
-        x = random.random()
-        y = random.random()
-        input_data_set.append([x, y])
-        expect_output_set.append([half_circle(x, y)])
+    for _ in range(100000):
+        perceptron.train(input_data_set, expect_output_set, 0.3)
 
-    num = 100000
-    learning_rate = 0.3
-    for i in range(num):
-        a.train(input_data_set, expect_output_set, learning_rate)
-        if i % 1000 == 0:
-            print(i / num)
+    trained_perceptron = open('./trained_perceptron.pickle', 'wb')
+    pickle.dump(perceptron, trained_perceptron)
+    trained_perceptron.close()
 
-    for _ in range(10):
-        x = random.random()
-        y = random.random()
-        print([x, y])
-        print(a.get_result([x, y]))
+    old = pickle.load(open('./trained_perceptron.pickle', 'rb'))
+    print(old.get_result([0, 0]))
+    print(old.get_result([0, 1]))
+    print(old.get_result([1, 0]))
+    print(old.get_result([1, 1]))
 
 
-f = open("asdf.txt", 'w')
-f.write("hi!")
+old = pickle.load(open('./trained_perceptron.pickle', 'rb'))
+print(old.get_result([0, 0]))
+print(old.get_result([0, 1]))
+print(old.get_result([1, 0]))
+print(old.get_result([1, 1]))
+
+"""
+f = open("./asdf.pickle", 'wb')
+users = {'kim': '3kid9', 'sun80': '393948', 'ljm': 'py90390'}
+import pickle
+pickle.dump(users, f)
 f.close()
 
+k = pickle.load(open('./asdf.pickle', 'rb'))
+print(k['kim'])"""
