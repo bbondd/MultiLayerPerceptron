@@ -153,10 +153,11 @@ class Layer(object):
 
 
 class Perceptron(object):
-    def __init__(self, layer_node_numbers, hidden_layer_number, dropout_percentage, activation_function):
+    def __init__(self, layer_node_numbers, dropout_percentage, activation_function):
         input_layer_node_number = layer_node_numbers[0]
-        hidden_layer_node_number = layer_node_numbers[1]
-        output_layer_node_number = layer_node_numbers[2]
+        hidden_layer_number = layer_node_numbers[1]
+        hidden_layer_node_number = layer_node_numbers[2]
+        output_layer_node_number = layer_node_numbers[3]
 
         self.layers = []
         self.layers.append(Layer(input_layer_node_number, dropout_percentage, activation_function))
@@ -212,7 +213,7 @@ class Perceptron(object):
 
 
 def main():
-    perceptron = Perceptron([2, 3, 1], 2, 0.4, leaky_rectified_linear_unit)
+    perceptron = Perceptron([2, 3, 2, 1], 0.4, leaky_rectified_linear_unit)
 
     input_data_set = [
         [0, 0],
@@ -240,6 +241,7 @@ def main():
     print(old.get_result([0, 1]))
     print(old.get_result([1, 0]))
     print(old.get_result([1, 1]))
+
 
 main()
 
